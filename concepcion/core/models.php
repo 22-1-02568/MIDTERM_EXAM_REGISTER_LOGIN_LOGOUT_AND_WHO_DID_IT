@@ -46,6 +46,19 @@ function updateCustomer(PDO $pdo, string $fname, string $lname, string $phone, s
     }
 }
 
+// Retrieves a bartender by ID
+function getBartenderByID(PDO $pdo, int $bartenderID): ?array {
+    try {
+        $query = "SELECT bartenderID, fname, lname, experience, added_by, last_updated FROM bartenders WHERE bartenderID = :bartenderID";
+        $statement = $pdo->prepare($query);
+        $statement->execute([':bartenderID' => $bartenderID]);
+        return $statement->fetch(PDO::FETCH_ASSOC) ?: null; // Return null if no bartender found
+    } catch (PDOException $e) {
+        error_log("Error fetching bartender: " . $e->getMessage());
+        return null;
+    }
+}
+
 // Retrieves all bartenders
 function getAllBartenders(PDO $pdo): array {
     try {
@@ -115,6 +128,19 @@ function getAllCustomers(PDO $pdo): array {
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         error_log("Error fetching customers: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Retrieves all customers for dropdown options
+function getAllCustomerNames(PDO $pdo): array {
+    try {
+        $query = "SELECT customerID, fname, lname FROM customers";
+        $statement = $pdo->prepare($query);
+        $statement->execute();
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching customer names: " . $e->getMessage());
         return [];
     }
 }
@@ -194,27 +220,70 @@ function loginUser(string $username, string $password, PDO $pdo): ?array {
 }
 
 // Adds a new order
-function addOrder(PDO $pdo, int $customerID, int $bartenderID, string $drinkName, string $orderStatus, string $addedBy): bool {
+function addOrder(PDO $pdo, int $customerID, int $bartenderID, string $orderDetails, string $orderStatus, string $addedBy): bool {
     try {
-        $query = "INSERT INTO orders (customerID, bartenderID, drinkName, orderStatus, added_by, last_updated) VALUES (:customerID, :bartenderID, :drinkName, :orderStatus, :added_by, NOW())";
+        $query = "INSERT INTO orders (customerID, bartenderID, orderDetails, orderStatus, added_by, last_updated) VALUES (:customerID, :bartenderID, :orderDetails, :orderStatus, :added_by, NOW())";
         $statement = $pdo->prepare($query);
-        return $statement->execute([
+        
+        // Log the parameters being passed to help with debugging
+        error_log("Adding order with: Customer ID: $customerID, Bartender ID: $bartenderID, Order Details: $orderDetails, Order Status: $orderStatus, Added By: $addedBy");
+
+        // Execute the prepared statement and return the result
+        if ($statement->execute([
             ':customerID' => $customerID,
             ':bartenderID' => $bartenderID,
-            ':drinkName' => $drinkName,
+            ':orderDetails' => $orderDetails, // Updated to match the column name
             ':orderStatus' => $orderStatus,
             ':added_by' => $addedBy
-        ]);
+        ])) {
+            return true;
+        } else {
+            // Log any execution errors for debugging
+            error_log("Failed to execute query: " . implode(", ", $statement->errorInfo()));
+            return false;
+        }
     } catch (PDOException $e) {
         error_log("Error adding order: " . $e->getMessage());
         return false;
     }
 }
 
+// Retrieves an order by ID
+// Retrieves an order by ID along with customer name
+function getOrderByID(PDO $pdo, int $orderID): ?array {
+    try {
+        $query = "SELECT orders.orderID, 
+                         customers.fname AS customerFirstName, 
+                         customers.lname AS customerLastName,
+                         orders.bartenderID, 
+                         orders.orderDetails, 
+                         orders.orderStatus, 
+                         orders.added_by, 
+                         orders.last_updated 
+                  FROM orders 
+                  JOIN customers ON orders.customerID = customers.customerID 
+                  WHERE orders.orderID = :orderID";
+        $statement = $pdo->prepare($query);
+        $statement->execute([':orderID' => $orderID]);
+        return $statement->fetch(PDO::FETCH_ASSOC) ?: null; // Return null if no order found
+    } catch (PDOException $e) {
+        error_log("Error fetching order: " . $e->getMessage());
+        return null;
+    }
+}
+
+
+
 // Retrieves all orders with customer and bartender names
 function getAllOrders(PDO $pdo): array {
     try {
-        $query = "SELECT orders.orderID, customers.fname AS customerName, bartenders.fname AS bartenderName, orders.drinkName, orders.orderStatus, orders.added_by, orders.last_updated 
+        $query = "SELECT orders.orderID, 
+                         customers.fname AS customerName, 
+                         bartenders.fname AS bartenderName, 
+                         orders.orderDetails, 
+                         orders.orderStatus, 
+                         orders.added_by, 
+                         orders.last_updated 
                   FROM orders 
                   JOIN customers ON orders.customerID = customers.customerID 
                   JOIN bartenders ON orders.bartenderID = bartenders.bartenderID";
@@ -226,6 +295,7 @@ function getAllOrders(PDO $pdo): array {
         return [];
     }
 }
+
 
 // Deletes an order
 function deleteOrder(PDO $pdo, int $orderID): bool {
@@ -239,25 +309,14 @@ function deleteOrder(PDO $pdo, int $orderID): bool {
     }
 }
 
-// Retrieves an order by ID
-function getOrderByID(PDO $pdo, int $orderID): ?array {
+// Updates order details
+function updateOrder(PDO $pdo, int $orderID, int $customerID, int $bartenderID, string $drinkName, string $orderStatus, string $updatedBy): bool {
     try {
-        $query = "SELECT orderID, customerID, bartenderID, drinkName, orderStatus, added_by, last_updated FROM orders WHERE orderID = :orderID";
-        $statement = $pdo->prepare($query);
-        $statement->execute([':orderID' => $orderID]);
-        return $statement->fetch(PDO::FETCH_ASSOC) ?: null; // Return null if no order found
-    } catch (PDOException $e) {
-        error_log("Error fetching order: " . $e->getMessage());
-        return null;
-    }
-}
-
-// Updates order information
-function updateOrder(PDO $pdo, string $drinkName, string $orderStatus, int $orderID, string $updatedBy): bool {
-    try {
-        $query = "UPDATE orders SET drinkName = :drinkName, orderStatus = :orderStatus, added_by = :added_by, last_updated = NOW() WHERE orderID = :orderID";
+        $query = "UPDATE orders SET customerID = :customerID, bartenderID = :bartenderID, drinkName = :drinkName, orderStatus = :orderStatus, added_by = :added_by, last_updated = NOW() WHERE orderID = :orderID";
         $statement = $pdo->prepare($query);
         return $statement->execute([
+            ':customerID' => $customerID,
+            ':bartenderID' => $bartenderID,
             ':drinkName' => $drinkName,
             ':orderStatus' => $orderStatus,
             ':added_by' => $updatedBy,

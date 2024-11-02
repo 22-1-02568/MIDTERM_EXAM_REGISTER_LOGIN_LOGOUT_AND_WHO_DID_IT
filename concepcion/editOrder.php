@@ -1,20 +1,26 @@
-<?php 
+<?php
 
 require_once 'core/dbConfig.php';
 require_once 'core/models.php';
 
-// Check if customerID is set in the URL
-if (!isset($_GET['customerID'])) {
-    die('Error: customerID is missing.');
+// Check if orderID is set in the URL
+if (!isset($_GET['orderID'])) {
+    die('Error: orderID is missing.');
 }
 
-$customerID = $_GET['customerID']; // Safe to access customerID
-$getCustomerByID = getCustomerByID($pdo, $customerID);
+// Retrieve orderID from URL and ensure it's an integer
+$orderID = (int)$_GET['orderID'];
 
-// Check if data was returned
-if (!$getCustomerByID) {
-    die('Error: Customer not found.');
+// Fetch order data by ID
+$getOrderByID = getOrderByID($pdo, $orderID);
+
+// If no order found, display an error message
+if (!$getOrderByID) {
+    die("Error: Order not found.");
 }
+
+// Fetch all customers
+$customers = getAllCustomers($pdo);
 
 ?>
 
@@ -23,41 +29,114 @@ if (!$getCustomerByID) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Customer</title>
-    <link rel="stylesheet" href="path/to/your/styles.css"> <!-- Link your styles here -->
+    <title>Edit Order</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to your CSS file -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #34495e;
+        }
+        h2 {
+            color: #5a5a5a;
+        }
+        label {
+            margin-top: 10px;
+            display: block;
+        }
+        select {
+            width: 95%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #4cae4c;
+        }
+        .info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .back-btn {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .back-btn a {
+            text-decoration: none;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <h1>Bar Management System</h1>
-    <br><br>
-    <h2>Update Customer Information:</h2>
-    <form action="core/handleForms.php" method="POST">
-        <input type="hidden" name="customerID" value="<?php echo htmlspecialchars($customerID); ?>">
+    <div class="container">
+        <h1>Bar Management System</h1>
+        <h2>Update Order Information:</h2>
+        <form action="core/handleForms.php" method="POST">
+            <input type="hidden" name="orderID" value="<?php echo htmlspecialchars($orderID); ?>">
 
-        <label for="fname">First Name</label>
-        <input type="text" name="fname" value="<?php echo htmlspecialchars($getCustomerByID['fname']); ?>" required>
-        <br><br>
-        
-        <label for="lname">Last Name</label>
-        <input type="text" name="lname" value="<?php echo htmlspecialchars($getCustomerByID['lname']); ?>" required>
-        <br><br>
-        
-        <label for="email">Email</label>
-        <input type="email" name="email" value="<?php echo htmlspecialchars($getCustomerByID['email']); ?>" required>
-        <br><br>
-        
-        <label for="phone">Phone</label>
-        <input type="text" name="phone" value="<?php echo htmlspecialchars($getCustomerByID['phone']); ?>" required>
-        <br><br>
-        
-        <label for="status">Status</label>
-        <select name="status" required>
-            <option value="" disabled>---</option>
-            <option value="active" <?php echo ($getCustomerByID['status'] === 'active') ? 'selected' : ''; ?>>Active</option>
-            <option value="inactive" <?php echo ($getCustomerByID['status'] === 'inactive') ? 'selected' : ''; ?>>Inactive</option>
-        </select>
-        <br><br>
-        
-        <input type="submit" value="Update" name="editCustomerBtn">
-    </form>
+            <label for="customerName">Customer Name</label>
+            <select name="customerID" required>
+                <option value="" disabled>Select a customer</option>
+                <?php foreach ($customers as $customer): ?>
+                    <option value="<?php echo htmlspecialchars($customer['customerID']); ?>" 
+                        >
+                        <?php echo htmlspecialchars($customer['fname'] . ' ' . $customer['lname']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            
+            <label for="orderDetails">Order Details</label>
+            <select name="orderDetails" required>
+                <option value="" disabled>---</option>
+                <option value="Coke" <?php echo ($getOrderByID['orderDetails'] === 'Coke') ? 'selected' : ''; ?>>Coke</option>
+                <option value="Sprite" <?php echo ($getOrderByID['orderDetails'] === 'Sprite') ? 'selected' : ''; ?>>Sprite</option>
+                <option value="Lemonade" <?php echo ($getOrderByID['orderDetails'] === 'Lemonade') ? 'selected' : ''; ?>>Lemonade</option>
+                <option value="Water" <?php echo ($getOrderByID['orderDetails'] === 'Water') ? 'selected' : ''; ?>>Water</option>
+            </select>
+
+            <label for="orderStatus">Order Status</label>
+            <select name="orderStatus" required>
+                <option value="" disabled>---</option>
+                <option value="pending" <?php echo ($getOrderByID['orderStatus'] === 'pending') ? 'selected' : ''; ?>>Pending</option>
+                <option value="completed" <?php echo ($getOrderByID['orderStatus'] === 'completed') ? 'selected' : ''; ?>>Completed</option>
+            </select>
+
+            <div class="info">
+                <p><strong>Added By:</strong> <?php echo htmlspecialchars($getOrderByID['added_by']); ?></p>
+                <p><strong>Last Updated:</strong> <?php echo htmlspecialchars($getOrderByID['last_updated']); ?></p>
+            </div>
+            
+            <input type="submit" value="Update" name="updateOrderBtn">
+        </form>
+        <button class="back-btn"><a href="index.php">Back</a></button>
+    </div>
 </body>
 </html>

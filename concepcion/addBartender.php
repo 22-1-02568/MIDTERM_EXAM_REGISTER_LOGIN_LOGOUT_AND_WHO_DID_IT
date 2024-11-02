@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: block;
         }
         input[type="text"], input[type="number"] {
-            width: 100%;
+            width: 95%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;

@@ -1,35 +1,38 @@
 <?php
-session_start(); // Start the session to access session variables
+session_start();
 require_once 'core/dbConfig.php';
 require_once 'core/models.php';
 
 // Fetch customers and bartenders for dropdown selection
 $customers = getAllCustomers($pdo);
-$bartenders = getAllBartenders($pdo); // Fetching bartenders
-$message = ''; // Initialize message variable
+$bartenders = getAllBartenders($pdo);
+$message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Get form data
+    // Get form data and sanitize
     $customerID = trim($_POST['customerID']);
-    $drinkID = trim($_POST['drinkID']);
+    $orderDetails = trim($_POST['drinkID']);  // Keeping this to reflect order details
     $orderStatus = trim($_POST['orderStatus']);
-    $bartenderID = trim($_POST['bartenderID']); // Get bartender ID
+    $bartenderID = trim($_POST['bartenderID']);
 
     // Validate input data
-    if (!empty($customerID) && !empty($drinkID) && !empty($orderStatus) && !empty($bartenderID)) {
-        // Ensure we have an addedBy user (e.g., the logged-in user's username)
+    if (!empty($customerID) && !empty($orderDetails) && !empty($orderStatus) && !empty($bartenderID)) {
+        // Set addedBy as the session's username if available
         $addedBy = isset($_SESSION['username']) ? $_SESSION['username'] : 'Unknown';
 
         // Call the function to add the order
-        if (addOrder($pdo, $customerID, $bartenderID, $drinkID, $orderStatus, $addedBy)) {
+        if (addOrder($pdo, $customerID, $bartenderID, $orderDetails, $orderStatus, $addedBy)) {
             $message = "Order added successfully!";
         } else {
-            $message = "Failed to add order.";
+            // Capture and log the SQL error
+            error_log(print_r($pdo->errorInfo(), true)); // Log the error
+            $message = "Failed to add order. Please try again.";
         }
     } else {
         $message = "Please fill in all fields correctly.";
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -38,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Order</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -121,10 +124,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             <label for="drinkID">Drink:</label>
             <select name="drinkID" required>
-                <option value="1">Coke</option>
-                <option value="2">Sprite</option>
-                <option value="3">Lemonade</option>
-                <option value="4">Water</option>
+                <option value="Coke">Coke</option>
+                <option value="Sprite">Sprite</option>
+                <option value="Lemonade">Lemonade</option>
+                <option value="Water">Water</option>
                 <!-- Add more drinks as needed -->
             </select>
 
@@ -143,7 +146,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="Completed">Completed</option>
             </select>
             
-            <input type="submit" name="addOrderBtn" value="Add Order">
+            <input type="submit" value="Add Order" name="addOrderBtn">
         </form>
         <button><a href="index.php">Back</a></button>
     </div>

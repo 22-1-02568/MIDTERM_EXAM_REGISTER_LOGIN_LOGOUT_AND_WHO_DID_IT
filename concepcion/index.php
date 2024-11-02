@@ -18,7 +18,7 @@ if (isset($_SESSION['message'])) {
 // Fetch all bartenders, customers, and orders
 $allBartenders = getAllBartenders($pdo);
 $allCustomers = getAllCustomers($pdo);
-$allOrders = getAllOrders($pdo);
+$allOrders = getAllOrders($pdo); // Ensure this retrieves the correct data
 ?>
 
 <!DOCTYPE html>
@@ -189,23 +189,29 @@ $allOrders = getAllOrders($pdo);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($allOrders as $order): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($order['orderID']); ?></td>
-                            <td><?php echo htmlspecialchars($order['customerName']); ?></td>
-                            <td><?php echo htmlspecialchars($order['drinkName']); ?></td>
-                            <td><?php echo htmlspecialchars($order['orderStatus']); ?></td>
-                            <td><?php echo htmlspecialchars($order['added_by']); ?></td>
-                            <td><?php echo htmlspecialchars($order['last_updated']); ?></td>
-                            <td>
-                                <a class="button edit" href="editorder.php?orderID=<?php echo urlencode($order['orderID']); ?>">Edit</a>
-                                <form action="core/handleForms.php" method="POST" style="display:inline;">
-                                    <input type="hidden" name="orderID" value="<?php echo htmlspecialchars($order['orderID']); ?>">
-                                    <input class="button delete" type="submit" name="deleteOrderBtn" value="Delete" onclick="return confirm('Are you sure you want to delete this order?');">
-                                </form>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <?php if (count($allOrders) > 0): ?>
+                            <?php foreach ($allOrders as $order): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($order['orderID']); ?></td>
+                                <td><?php echo htmlspecialchars($order['customerName']); ?></td>
+                                <td><?php echo htmlspecialchars($order['orderDetails']); ?></td>
+                                <td><?php echo htmlspecialchars($order['orderStatus']); ?></td>
+                                <td><?php echo htmlspecialchars($order['added_by']); ?></td>
+                                <td><?php echo htmlspecialchars($order['last_updated']); ?></td>
+                                <td>
+                                    <a class="button edit" href="editorder.php?orderID=<?php echo urlencode($order['orderID']); ?>">Edit</a>
+                                    <form action="core/handleForms.php" method="POST" style="display:inline;">
+                                        <input type="hidden" name="orderID" value="<?php echo htmlspecialchars($order['orderID']); ?>">
+                                        <input class="button delete" type="submit" name="deleteOrderBtn" value="Delete" onclick="return confirm('Are you sure you want to delete this order?');">
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="7">No orders found.</td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </section>
