@@ -19,8 +19,9 @@ if (!$getOrderByID) {
     die("Error: Order not found.");
 }
 
-// Fetch all customers
+// Fetch all customers and bartenders
 $customers = getAllCustomers($pdo);
+$bartenders = getAllBartenders($pdo); // Function to fetch all bartenders from the database
 
 ?>
 
@@ -107,26 +108,37 @@ $customers = getAllCustomers($pdo);
                 <option value="" disabled>Select a customer</option>
                 <?php foreach ($customers as $customer): ?>
                     <option value="<?php echo htmlspecialchars($customer['customerID']); ?>" 
-                        >
+                        <?php echo (isset($getOrderByID['customerID']) && $getOrderByID['customerID'] == $customer['customerID']) ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($customer['fname'] . ' ' . $customer['lname']); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
             
+            <label for="bartenderID">Bartender</label>
+            <select name="bartenderID" required>
+                <option value="" disabled>Select a bartender</option>
+                <?php foreach ($bartenders as $bartender): ?>
+                    <option value="<?php echo htmlspecialchars($bartender['bartenderID']); ?>" 
+                        <?php echo (isset($getOrderByID['bartenderID']) && $getOrderByID['bartenderID'] == $bartender['bartenderID']) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($bartender['fname'] . ' ' . $bartender['lname']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
             <label for="orderDetails">Order Details</label>
             <select name="orderDetails" required>
                 <option value="" disabled>---</option>
-                <option value="Coke" <?php echo ($getOrderByID['orderDetails'] === 'Coke') ? 'selected' : ''; ?>>Coke</option>
-                <option value="Sprite" <?php echo ($getOrderByID['orderDetails'] === 'Sprite') ? 'selected' : ''; ?>>Sprite</option>
-                <option value="Lemonade" <?php echo ($getOrderByID['orderDetails'] === 'Lemonade') ? 'selected' : ''; ?>>Lemonade</option>
-                <option value="Water" <?php echo ($getOrderByID['orderDetails'] === 'Water') ? 'selected' : ''; ?>>Water</option>
+                <option value="Coke" <?php echo (isset($getOrderByID['orderDetails']) && $getOrderByID['orderDetails'] === 'Coke') ? 'selected' : ''; ?>>Coke</option>
+                <option value="Sprite" <?php echo (isset($getOrderByID['orderDetails']) && $getOrderByID['orderDetails'] === 'Sprite') ? 'selected' : ''; ?>>Sprite</option>
+                <option value="Lemonade" <?php echo (isset($getOrderByID['orderDetails']) && $getOrderByID['orderDetails'] === 'Lemonade') ? 'selected' : ''; ?>>Lemonade</option>
+                <option value="Water" <?php echo (isset($getOrderByID['orderDetails']) && $getOrderByID['orderDetails'] === 'Water') ? 'selected' : ''; ?>>Water</option>
             </select>
 
             <label for="orderStatus">Order Status</label>
             <select name="orderStatus" required>
                 <option value="" disabled>---</option>
-                <option value="pending" <?php echo ($getOrderByID['orderStatus'] === 'pending') ? 'selected' : ''; ?>>Pending</option>
-                <option value="completed" <?php echo ($getOrderByID['orderStatus'] === 'completed') ? 'selected' : ''; ?>>Completed</option>
+                <option value="pending" <?php echo (isset($getOrderByID['orderStatus']) && $getOrderByID['orderStatus'] === 'pending') ? 'selected' : ''; ?>>Pending</option>
+                <option value="completed" <?php echo (isset($getOrderByID['orderStatus']) && $getOrderByID['orderStatus'] === 'completed') ? 'selected' : ''; ?>>Completed</option>
             </select>
 
             <div class="info">
@@ -134,7 +146,7 @@ $customers = getAllCustomers($pdo);
                 <p><strong>Last Updated:</strong> <?php echo htmlspecialchars($getOrderByID['last_updated']); ?></p>
             </div>
             
-            <input type="submit" value="Update" name="updateOrderBtn">
+            <input type="submit" value="Update" name="editOrderBtn">
         </form>
         <button class="back-btn"><a href="index.php">Back</a></button>
     </div>

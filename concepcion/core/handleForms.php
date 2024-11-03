@@ -234,7 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validate inputs
         if ($customerID > 0 && $bartenderID > 0 && !empty($orderDetails) && !empty($orderStatus)) {
             // Call to update the order
-            if (updateOrder($pdo, $orderID, $customerID, $bartenderID, $orderDetails, $orderStatus, $added_by, $last_updated)) {
+            if (editOrder($pdo, $orderID, $customerID, $bartenderID, $orderDetails, $orderStatus, $added_by, $last_updated)) {
                 $_SESSION['message'] = "Order updated successfully!";
             } else {
                 $_SESSION['message'] = "Failed to update order.";

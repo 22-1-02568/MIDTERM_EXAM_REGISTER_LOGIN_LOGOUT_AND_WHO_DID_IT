@@ -163,7 +163,7 @@ function updateBartender(PDO $pdo, string $fname, string $lname, int $experience
     }
 }
 
-// Registers an account with secure password hashing
+// Registers an account with secure password hashing to database
 function createAccount(PDO $pdo, string $username, string $password): bool {
     try {
         $checkQuery = "SELECT * FROM accounts WHERE username = :username";
@@ -310,14 +310,14 @@ function deleteOrder(PDO $pdo, int $orderID): bool {
 }
 
 // Updates order details
-function updateOrder(PDO $pdo, int $orderID, int $customerID, int $bartenderID, string $drinkName, string $orderStatus, string $updatedBy): bool {
+function editOrder(PDO $pdo, int $orderID, int $customerID, int $bartenderID, string $orderDetails, string $orderStatus, string $updatedBy): bool {
     try {
-        $query = "UPDATE orders SET customerID = :customerID, bartenderID = :bartenderID, drinkName = :drinkName, orderStatus = :orderStatus, added_by = :added_by, last_updated = NOW() WHERE orderID = :orderID";
+        $query = "UPDATE orders SET customerID = :customerID, bartenderID = :bartenderID, orderDetails = :orderDetails, orderStatus = :orderStatus, added_by = :added_by, last_updated = NOW() WHERE orderID = :orderID";
         $statement = $pdo->prepare($query);
         return $statement->execute([
             ':customerID' => $customerID,
             ':bartenderID' => $bartenderID,
-            ':drinkName' => $drinkName,
+            ':orderDetails' => $orderDetails,
             ':orderStatus' => $orderStatus,
             ':added_by' => $updatedBy,
             ':orderID' => $orderID
